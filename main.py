@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 
 
 infile = open('valid_wordle_words.txt','r')
@@ -74,7 +75,7 @@ def wordle_simple_ai(num_restarts,first_guess,tries=0):
   contains=[]
   known_pos=['-','-','-','-','-']
   
-  valid_words = words
+  valid_words = copy.deepcopy(words)
   
   while not(feedback == '22222'):
   
@@ -98,7 +99,8 @@ def wordle_simple_ai(num_restarts,first_guess,tries=0):
             valid_word=False
 
         if not(valid_word):
-          valid_words.remove(guess)
+            if (valid_word in valid_words):
+                valid_words.remove(guess)
           #print(len(valid_words))
         #print(guess,valid_word)
 
@@ -122,9 +124,100 @@ def wordle_simple_ai(num_restarts,first_guess,tries=0):
     print(tries)
 
   return (guess,answer,tries)
-print(wordle_simple_ai(1,'arose'))
+# Good starting words are slate or salet, based on the article
 
-# TODO: Create a function that chooses words based on remaining letter frequencies, with a goal of choosing letters that
-# eliminates as many words as possible
 
-# test
+G = {}
+    # yellow letters (dict, letter -> possible indices)
+Y = {}
+    # grey letters (set)
+R = []
+def wordle_ai(num_restarts,first_guess,tries=0):
+    
+    # green letters (dict, letter -> index)
+
+    
+    remaining_words = copy.deepcopy(words)
+    
+    # TODO: Create a function that chooses words based on remaining letter frequencies, with a goal of choosing letters that
+    # eliminates as many words as possible
+    feedback=''
+    #TMP: custom word
+    answer = 'arose'
+    #answer=np.random.choice(words)
+    R = []
+    valid_words = copy.deepcopy(words)
+    guess=first_guess
+    # While the word has not been solved for
+    while not(feedback == '22222'):
+    
+
+    
+
+        tries, feedback=wordle(answer,tries,guess)
+        if (guess in valid_words):
+            valid_words.remove(guess)
+        print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries)
+
+      
+
+
+    # translate the following from iterative to recursive:
+    
+    # while the word is not solved: 
+    #   update g, y, and r
+        pos = 0
+        
+        for i in feedback:
+            #print(pos)
+            letter = guess[pos]
+            if (i == '2'):
+                G[letter] = pos
+            elif (i == '1'):
+                if (letter not in Y):
+                    #print("letter",letter,"pos:",pos)
+                    Y[letter] = {0,1,2,3,4}
+                else:
+                    if (pos in Y[letter]):
+                        Y[letter].remove(pos)
+            elif (i == '0'):
+                if (letter not in R):
+                    R += letter
+                
+            pos += 1
+        #   update remaining words
+        for word in remaining_words:
+            pos=0
+            possible=True
+            for letter in word:
+                if letter in R: # In case of grey: 
+                    possible=False
+            if letter in Y: # in case of yellow
+                if pos not in Y[letter]:
+                    possible=False
+            pos+=1
+            if not(possible):
+                remaining_words.remove(word)
+ 
+            
+                
+            continue;
+            #print('')
+            
+        print(Y)    
+        guess=valid_words[0]
+        #guess = 'arose'
+    #   for each word in valid_words:
+    
+        for word in remaining_words:
+            #       calculate partition rate
+    #   rank valid words by parition rate
+    #   for the top k words:
+    #       recurse (making a tree)
+    
+    #   choose the best word
+    #   guess = 
+    return (guess,answer,tries)
+
+# Call function
+print(wordle_ai(1,'chord'))
