@@ -126,3 +126,5 @@ print(wordle_simple_ai(1,'arose'))
 
 # TODO: Create a function that chooses words based on remaining letter frequencies, with a goal of choosing letters that
 # eliminates as many words as possible
+
+# test
