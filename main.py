@@ -22,9 +22,9 @@ for word in words:
     letter_freq[letter]+=1
     #print(int(letter_freq[letter]))
 #keys,items=letter_freq.items()
-sorted_letters = dict(sorted(letter_freq.items(), key = lambda item: item[1]))
-for i in reversed(sorted_letters):
-  print(i)
+#sorted_letters = dict(sorted(letter_freq.items(), key = lambda item: item[1]))
+#for i in reversed(sorted_letters):
+ # print(i)
 
 # This suggests that the word "arose" has the highest liklihood of having at least 1 letter in the final word
 
@@ -171,77 +171,10 @@ def wordle_ai(num_restarts,first_guess,tries=0):
     
     # while the word is not solved: 
     #   update g, y, and r
-        pos = 0
-        
-        for i in feedback:
-            #print(pos)
-            letter = guess[pos]
-            if (i == '2'):
-                G[letter] = pos
-            elif (i == '1'):
-                if (letter not in Y):
-                    #print("letter",letter,"pos:",pos)
-                    Y[letter] = {0,1,2,3,4}
-                
-                if (pos in Y[letter]):
-                    Y[letter].remove(pos)
-                    
-            elif (i == '0'):
-                if (letter not in R):
-                    R += letter
-                
-            pos += 1
+     
+        update_GRY(feedback,guess,G,R,Y)
         #   update remaining words
-        tmp = ['arpas']
-        global iters
-        iters=0
-        print(len(remaining_words))
-        global words_to_remove
-        words_to_remove = []
-        for word in remaining_words:
-            iters+=1
-            pos=0
-            case = 0
-            tmp0  = 0
-            tmp1 = 1
-            tmp2 = 2
-            
-            possible=True
-            for letter in word:
-                
-                if letter in R: # In case of grey: 
-                    possible=False
-                    case = 1
-                
-                if letter in Y: # in case of yellow
-                    if (pos not in Y[letter]):       
-                        possible=False
-                        case = 2
-  
-                pos+=1
-                for letter in Y:
-                    if letter not in word:
-                        possible=False
-                        case = 4
-                for letter in G:
-                        if not(letter == word[G[letter]]):
-                            possible=False
-                            case=5
-
-            #for letter in G:
-            #if (word[pos] in G):
-                    
-                
-                
-            if not(possible):
-                words_to_remove.append(word)
-                #remaining_words.remove(word)
-                #break;
-                if (word == answer):
-                    print('just removed the answer, case',case,tmp0,'==',tmp1)
-        for word in words_to_remove:
-            if word in remaining_words:
-                remaining_words.remove(word)
+        update_possible_words(remaining_words,G,R,Y)
         
         
         print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries, 'Remaining words:',len(remaining_words),'G',G,'Y',Y,'R',R)
@@ -255,6 +188,35 @@ def wordle_ai(num_restarts,first_guess,tries=0):
         if (len(remaining_words) > 0) and (not(feedback == '22222')):
             
             guess=np.random.choice(remaining_words)
+            
+        if (len(remaining_words) < 100):
+            min_words_remaining = float('inf')
+            for word in remaining_words:
+                tmp = 0
+                feedback_tmp = ''
+                potential_words = copy.deepcopy(remaining_words)
+                potential_words.remove(word)
+                num_words_remaining = {}
+                lengths = []
+                for pot_answer in potential_words:
+                    tmp, feedback_tmp=wordle(pot_answer,tries,word)
+                    cR = copy.deepcopy(R)
+                    cG = copy.deepcopy(G)
+                    cY = copy.deepcopy(Y)
+                    
+                    c_potential_words = copy.deepcopy(remaining_words)
+                    update_GRY(feedback_tmp,word,cG,cR,cY)
+                    update_possible_words(c_potential_words,cG,cR,cY)
+                    lengths.append(len(c_potential_words))
+                    
+                num_words_remaining[word] = np.mean(lengths)
+                #avg_words_remaining = np.mean(num_words_remaining[:])
+                print(num_words_remaining)
+            
+                if (num_words_remaining[word] < min_words_remaining):
+                    min_words_remaining = num_words_remaining[word]
+                    guess = word
+                
         #guess = 'arose'
         
     #   for each word in valid_words:
@@ -268,5 +230,68 @@ def wordle_ai(num_restarts,first_guess,tries=0):
     #   choose the best word
 
     return (guess,answer,tries)
+
+def update_GRY(feedback, guess, G, R, Y):
+    pos = 0
+    
+    for i in feedback:
+        #print(pos)
+        letter = guess[pos]
+        if (i == '2'):
+            G[letter] = pos
+        elif (i == '1'):
+            if (letter not in Y):
+                #print("letter",letter,"pos:",pos)
+                Y[letter] = {0,1,2,3,4}
+            
+            if (pos in Y[letter]):
+                Y[letter].remove(pos)
+                
+        elif (i == '0'):
+            if (letter not in R):
+                R += letter
+            
+        pos += 1
+
+def update_possible_words(remaining_words,G,R,Y):
+    iters=0
+    words_to_remove = []
+    for word in remaining_words:
+        iters+=1
+        pos=0
+        case=0
+        
+        possible=True
+        for letter in word:
+            
+            if letter in R: # In case of grey: 
+                possible=False
+                case = 1
+            
+            if letter in Y: # in case of yellow
+                if (pos not in Y[letter]):       
+                    possible=False
+                    case = 2
+
+            pos+=1
+            for letter in Y:
+                if letter not in word:
+                    possible=False
+                    case = 4
+            for letter in G:
+                    if not(letter == word[G[letter]]):
+                        possible=False
+                        case=5
+
+        if not(possible):
+            words_to_remove.append(word)
+
+    for word in words_to_remove:
+        if word in remaining_words:
+            remaining_words.remove(word)
+    
+    
+    
 # Call function
 print(wordle_ai(1,'salet'))
+
