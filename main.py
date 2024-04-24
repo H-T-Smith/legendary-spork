@@ -43,7 +43,7 @@ def wordle(answer,tries,guess):
   tries+=1
   #guess=' '
   #guess_info=''
-  print(tries)
+  #print(tries)
 
   if guess in words:
     guess_info=''
@@ -132,32 +132,37 @@ G = {}
 Y = {}
     # grey letters (set)
 R = []
+
 def wordle_ai(num_restarts,first_guess,tries=0):
     
     # green letters (dict, letter -> index)
-
-    
+    global R
+    global remaining_words
     remaining_words = copy.deepcopy(words)
     
     # TODO: Create a function that chooses words based on remaining letter frequencies, with a goal of choosing letters that
     # eliminates as many words as possible
     feedback=''
     #TMP: custom word
-    answer = 'arose'
-    #answer=np.random.choice(words)
-    R = []
-    valid_words = copy.deepcopy(words)
+    #answer = 'brake'
+    answer=np.random.choice(words)
+    global guess
     guess=first_guess
     # While the word has not been solved for
-    while not(feedback == '22222'):
-    
+    max_tries=15
+    global count
+    count=0
+    while not(feedback == '22222') and (count < max_tries):
+    #for i in range(2):
+        
+        count+=1
 
     
 
         tries, feedback=wordle(answer,tries,guess)
-        if (guess in valid_words):
-            valid_words.remove(guess)
-        print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries)
+        #feedback = '01010'
+        if (guess in remaining_words):
+            remaining_words.remove(guess)
 
       
 
@@ -177,47 +182,91 @@ def wordle_ai(num_restarts,first_guess,tries=0):
                 if (letter not in Y):
                     #print("letter",letter,"pos:",pos)
                     Y[letter] = {0,1,2,3,4}
-                else:
-                    if (pos in Y[letter]):
-                        Y[letter].remove(pos)
+                
+                if (pos in Y[letter]):
+                    Y[letter].remove(pos)
+                    
             elif (i == '0'):
                 if (letter not in R):
                     R += letter
                 
             pos += 1
         #   update remaining words
+        tmp = ['arpas']
+        global iters
+        iters=0
+        print(len(remaining_words))
+        global words_to_remove
+        words_to_remove = []
         for word in remaining_words:
+            iters+=1
             pos=0
+            case = 0
+            tmp0  = 0
+            tmp1 = 1
+            tmp2 = 2
+            
             possible=True
             for letter in word:
+                
                 if letter in R: # In case of grey: 
                     possible=False
-            if letter in Y: # in case of yellow
-                if pos not in Y[letter]:
-                    possible=False
-            pos+=1
-            if not(possible):
-                remaining_words.remove(word)
- 
-            
+                    case = 1
                 
-            continue;
+                if letter in Y: # in case of yellow
+                    if (pos not in Y[letter]):       
+                        possible=False
+                        case = 2
+  
+                pos+=1
+                for letter in Y:
+                    if letter not in word:
+                        possible=False
+                        case = 4
+                for letter in G:
+                        if not(letter == word[G[letter]]):
+                            possible=False
+                            case=5
+
+            #for letter in G:
+            #if (word[pos] in G):
+                    
+                
+                
+            if not(possible):
+                words_to_remove.append(word)
+                #remaining_words.remove(word)
+                #break;
+                if (word == answer):
+                    print('just removed the answer, case',case,tmp0,'==',tmp1)
+        for word in words_to_remove:
+            if word in remaining_words:
+                remaining_words.remove(word)
+        
+        
+        print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries, 'Remaining words:',len(remaining_words),'G',G,'Y',Y,'R',R)
+
+                
+            
             #print('')
             
-        print(Y)    
-        guess=valid_words[0]
+        #print(Y)
+        # REPLACE
+        if (len(remaining_words) > 0) and (not(feedback == '22222')):
+            
+            guess=np.random.choice(remaining_words)
         #guess = 'arose'
+        
     #   for each word in valid_words:
     
-        for word in remaining_words:
+        
             #       calculate partition rate
     #   rank valid words by parition rate
     #   for the top k words:
     #       recurse (making a tree)
     
     #   choose the best word
-    #   guess = 
-    return (guess,answer,tries)
 
+    return (guess,answer,tries)
 # Call function
-print(wordle_ai(1,'chord'))
+print(wordle_ai(1,'salet'))
