@@ -68,76 +68,17 @@ def wordle(answer,tries,guess):
 
 # TODO: narrow down the list based on valid words
 
-def wordle_simple_ai(num_restarts,first_guess,tries=0):
-  feedback=''
-  alphabet='abcdefghijklmnopqrstuvwxyz'
-  answer=np.random.choice(words)
-  contains=[]
-  known_pos=['-','-','-','-','-']
-  
-  valid_words = copy.deepcopy(words)
-  
-  while not(feedback == '22222'):
-  
 
-    valid_word=False
-    if (tries == 0):
-      guess=first_guess
-    else:
-      while not(valid_word):
-        valid_word=True
-        guess=np.random.choice(words)
-        for i in range(len(guess)):
-          if guess[i] not in alphabet:
-            valid_word=False
-          if not(guess[i] == known_pos[i]) and not(known_pos[i] == '-'):
-            valid_word=False
-
-
-        for valid_letter in contains:
-          if valid_letter not in guess:
-            valid_word=False
-
-        if not(valid_word):
-            if (valid_word in valid_words):
-                valid_words.remove(guess)
-          #print(len(valid_words))
-        #print(guess,valid_word)
-
-    #tries=0
-
-
-    tries, feedback=wordle(answer,tries,guess)
-    valid_words.remove(guess)
-    print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries,known_pos)
-
-    for pos in range(5):
-      if (feedback[pos] == '0'):
-        letter=guess[pos]
-        alphabet = alphabet.replace(guess[pos],'')
-      if (feedback[pos] == '1'):
-        contains+=guess[pos]
-      if (feedback[pos] == '2'):
-        contains+=guess[pos]
-        known_pos[pos] = guess[pos]
-
-    print(tries)
-
-  return (guess,answer,tries)
-# Good starting words are slate or salet, based on the article
-
-
-G = {}
-    # yellow letters (dict, letter -> possible indices)
-Y = {}
-    # grey letters (set)
-R = []
 
 def wordle_ai(num_restarts,first_guess,tries=0):
     
     # green letters (dict, letter -> index)
-    global R
-    global remaining_words
+    G = {}
+        # yellow letters (dict, letter -> possible indices)
+    Y = {}
+        # grey letters (set)
+    R = []
+
     remaining_words = copy.deepcopy(words)
     
     # TODO: Create a function that chooses words based on remaining letter frequencies, with a goal of choosing letters that
@@ -152,8 +93,8 @@ def wordle_ai(num_restarts,first_guess,tries=0):
     max_tries=15
     global count
     count=0
-    while not(feedback == '22222') and (count < max_tries):
-    #for i in range(2):
+    #while not(feedback == '22222') and (count < max_tries):
+    for i in range(1):
         
         count+=1
 
@@ -191,13 +132,16 @@ def wordle_ai(num_restarts,first_guess,tries=0):
             
         if (len(remaining_words) < 100):
             min_words_remaining = float('inf')
+            global lengths
+            lens = []
             for word in remaining_words:
                 tmp = 0
                 feedback_tmp = ''
                 potential_words = copy.deepcopy(remaining_words)
                 potential_words.remove(word)
                 num_words_remaining = {}
-                lengths = []
+                
+                lengths=[]
                 for pot_answer in potential_words:
                     tmp, feedback_tmp=wordle(pot_answer,tries,word)
                     cR = copy.deepcopy(R)
@@ -208,14 +152,44 @@ def wordle_ai(num_restarts,first_guess,tries=0):
                     update_GRY(feedback_tmp,word,cG,cR,cY)
                     update_possible_words(c_potential_words,cG,cR,cY)
                     lengths.append(len(c_potential_words))
-                    
+                
                 num_words_remaining[word] = np.mean(lengths)
+                lens.append(np.mean(lengths))
                 #avg_words_remaining = np.mean(num_words_remaining[:])
                 print(num_words_remaining)
             
                 if (num_words_remaining[word] < min_words_remaining):
                     min_words_remaining = num_words_remaining[word]
                     guess = word
+            if (np.std(lens) < 0.5) and len(lens) > 3: 
+                print('checking entire word set for the best word to eliminate choices')
+                for word in words:
+                    tmp = 0
+                    feedback_tmp = ''
+                    potential_words = copy.deepcopy(remaining_words)
+                    potential_words.remove(word)
+                    num_words_remaining = {}
+                    
+                    lengths=[]
+                    for pot_answer in potential_words:
+                        tmp, feedback_tmp=wordle(pot_answer,tries,word)
+                        cR = copy.deepcopy(R)
+                        cG = copy.deepcopy(G)
+                        cY = copy.deepcopy(Y)
+                        
+                        c_potential_words = copy.deepcopy(remaining_words)
+                        update_GRY(feedback_tmp,word,cG,cR,cY)
+                        update_possible_words(c_potential_words,cG,cR,cY)
+                        lengths.append(len(c_potential_words))
+                    
+                    num_words_remaining[word] = np.mean(lengths)
+                    #lens.append(np.mean(lengths))
+                    #avg_words_remaining = np.mean(num_words_remaining[:])
+                    print(num_words_remaining)
+                    if (num_words_remaining[word] < min_words_remaining):
+                        min_words_remaining = num_words_remaining[word]
+                        guess = word
+                
                 
         #guess = 'arose'
         
@@ -293,5 +267,13 @@ def update_possible_words(remaining_words,G,R,Y):
     
     
 # Call function
+avgs = []
 print(wordle_ai(1,'salet'))
+#for i in range(100):
+#    tmp = 0
+#    tmp1 = 0
+#    num_tries = 0
+#    tmp, tmp1, num_tries = wordle_ai(1,'salet')
+#    avgs.append(num_tries)
+#    print(num_tries)
 
