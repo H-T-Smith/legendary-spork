@@ -74,6 +74,7 @@ def wordle_ai(num_restarts,first_guess,compute_remaining,tries=0):
     
     # First time variables setup:
     feedback=''
+    #answer = 'vents'
     answer=np.random.choice(words)
     global guess
     guess=first_guess 
@@ -100,7 +101,7 @@ def wordle_ai(num_restarts,first_guess,compute_remaining,tries=0):
         update_possible_words(remaining_words,G,R,Y)
         
         # Print status: gives an idea of what the guess is, what the game state variables equal, and how many words remain
-        print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries, 'Remaining words:',len(remaining_words),'G',G,'Y',Y,'R',R)
+        print('Word: ',answer,'Guess: ',guess,'Feedback: ',feedback, 'Try #: ',tries, 'Remaining words:',len(remaining_words),'G',G,'Y',Y,'R',R,)
             
         if (len(remaining_words) > 0) and (not(feedback == '22222')):
             # Use if guessing the remaining word at random
@@ -112,14 +113,17 @@ def wordle_ai(num_restarts,first_guess,compute_remaining,tries=0):
             # For the sake of speed, limit to when we have less than 100 words left
             lens = []
             
-            find_min_words_remaining(remaining_words,remaining_words,guess,lens,G,R,Y)
+            #print('guess before',guess)
+            guess, lens = find_min_words_remaining(remaining_words,remaining_words,guess,lens,G,R,Y)
+            #print('guess after',guess)
             
             if (np.std(lens) < 0.5) and len(remaining_words) > 2: 
                 print('checking entire word set for the best word to eliminate choices')
                 # Perform a deeper search considering all words as possible guesses
                 # The guess returned here may not be following the rules, but is the best at eliminating the remaining choices
-                find_min_words_remaining(words,remaining_words,guess,lens,G,R,Y)
-
+                guess, lens = find_min_words_remaining(words,remaining_words,guess,lens,G,R,Y)
+        
+        print('chosen guess:',guess)
     return (guess,answer,tries)
 
 def find_min_words_remaining(words,words_subset,guess,lens,G,R,Y):
@@ -155,10 +159,10 @@ def find_min_words_remaining(words,words_subset,guess,lens,G,R,Y):
         
         if (num_words_remaining[word] < min_words_remaining):
             min_words_remaining = num_words_remaining[word]
-            guess = word
-            print(word, min_words_remaining)
+            guess = copy.deepcopy(word)
+            print(guess, min_words_remaining)
     
-    return;
+    return guess, lens
 
 # Updates the variables G, R, and Y based off the guess and feedback from that guess
 def update_GRY(feedback, guess, G, R, Y):
@@ -167,7 +171,7 @@ def update_GRY(feedback, guess, G, R, Y):
     for i in feedback:
         letter = guess[pos]
         if (i == '2'):
-            G[letter] = pos
+            G[pos] = letter
         elif (i == '1'): # Yellow case
             if (letter not in Y):
                 # If the letter is yellow for the first time, start off assuming it could be in any index
@@ -205,7 +209,11 @@ def update_possible_words(remaining_words,G,R,Y):
                 if (pos not in Y[letter]):       
                     possible=False
                     case = 2
-
+            
+            if pos in G:
+                if not(G[pos] == letter):
+                    possible=False
+            
             pos+=1
             
             # These require looping through the dictionaries for Y and G
@@ -213,10 +221,7 @@ def update_possible_words(remaining_words,G,R,Y):
                 if letter not in word:
                     possible=False
                     case = 4
-            for letter in G:
-                    if not(letter == word[G[letter]]):
-                        possible=False
-                        case=5
+           
 
         
         if not(possible):
@@ -233,20 +238,22 @@ def update_possible_words(remaining_words,G,R,Y):
     
 # Call function
 #avgs = []
-stdout = open('test_random_choice.txt','w')
 
-compute_remaining=False
-#print(wordle_ai(1,'salet',compute_remaining))
+
+# test with "vents"
+
+compute_remaining=True
+print(wordle_ai(1,'salet',compute_remaining))
 avgs = []
 compute_times = []
-start_time = time()
+start_time = time.time()
 for i in range(100):
     tmp = 0
     tmp1 = 0
     num_tries = 0
     tmp, tmp1, num_tries = wordle_ai(1,'salet',compute_remaining)
     avgs.append(num_tries)
-    end_time = time()
+    end_time = time.time()
     compute_times.append(end_time - start_time)
     print(num_tries)
-stdout.close()
+#stdout.close()
